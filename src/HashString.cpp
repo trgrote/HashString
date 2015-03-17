@@ -15,7 +15,6 @@ int HashStringInitilizer::getSchwarz()
     return s_schwarzCounter;
 }
 
-
 /// Static Initializer of HashString table and hash function
 HashStringInitilizer::HashStringInitilizer()
 {
@@ -106,30 +105,25 @@ std::string HashString::getString() const
 	return m_mapPosition->second;
 }
 
-/// Returns string hash value
-StringID HashString::getHashValue() const
-{
-	return m_mapPosition->first;
-}
-
 HashString::HashString()
 :	HashString( s_kEmptyString )	// redirect to copy constructor
 {
 }
 
 HashString::HashString( HashString const & other )
-:	m_mapPosition( other.m_mapPosition )
+:	m_mapPosition( other.m_mapPosition ),
+	m_hashValue( other.m_hashValue )
 {
 }
 
 /// Constructor that creates and ( if it doesn't exist ) adds to the interned string map
 HashString::HashString( std::string const & str )
 {
-	StringID hash_value = (*s_stringHash)( str );
+	m_hashValue = (*s_stringHash)( str );
 
     // Insert doesn't care if it already exists
     std::pair< InternStringMapIter, bool > result =
-		s_internedStrings->insert( InternStringPair( hash_value, str ) );
+		s_internedStrings->insert( InternStringPair( m_hashValue, str ) );
 
     m_mapPosition = result.first;
 }
@@ -138,6 +132,7 @@ HashString::HashString( std::string const & str )
 /// for this HashString.  Will throw UninternedStringIDRefException if string
 /// ID is not yet internned
 HashString::HashString( StringID const & str_id )
+:	m_hashValue( str_id )
 {
     // Find this key in the map
     m_mapPosition = s_internedStrings->find( str_id );
@@ -163,23 +158,24 @@ HashString::~HashString()
 HashString & HashString::operator=( HashString const & other )
 {
 	this->m_mapPosition = other.m_mapPosition;
+	m_hashValue = other.m_hashValue;
 
 	return *this;
 }
 
 bool HashString::operator< ( HashString const & other ) const
 {
-	return ( getHashValue() < other.getHashValue() );
+	return ( m_hashValue < other.m_hashValue );
 }
 
 bool HashString::operator== ( HashString const & other ) const
 {
-	return ( getHashValue() == other.getHashValue() );
+	return ( m_hashValue == other.m_hashValue );
 }
 
 bool HashString::operator!= ( HashString const & other ) const
 {
-	return !( getHashValue() == other.getHashValue() );
+	return !( m_hashValue == other.m_hashValue );
 }
 
 bool HashString::operator== ( std::string const & other ) const
@@ -194,17 +190,17 @@ bool HashString::operator!= ( std::string const & other ) const
 
 bool HashString::operator== ( StringID const & other ) const
 {
-	return ( getHashValue() == other );
+	return ( m_hashValue == other );
 }
 
 bool HashString::operator!= ( StringID const & other ) const
 {
-	return ( getHashValue() != other );
+	return ( m_hashValue != other );
 }
 
 bool HashString::operator< ( StringID const & other ) const
 {
-	return ( getHashValue() < other );
+	return ( m_hashValue < other );
 }
 
 //HashString::operator StringID const & () const
